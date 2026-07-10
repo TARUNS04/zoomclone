@@ -1,0 +1,12 @@
+{
+  "name": "zoomclone",
+  "version": "1.0.0",
+  "scripts": {
+    "frontend": "cd frontend && npm run dev",
+    "backend": "cd backend && source venv/bin/activate && uvicorn main:app --reload --port 8000",
+    "dev": "concurrently \"npm run frontend\" \"npm run backend\""
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.3"
+  }
+}

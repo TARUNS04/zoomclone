@@ -1,0 +1,414 @@
+.roomContainer {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #242424;
+  color: white;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* ── Top bar ── */
+.topBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 1.5rem;
+  background: #1c1c1c;
+  border-bottom: 1px solid #333;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.topLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.statusDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.meetingIdText {
+  font-size: 0.85rem;
+  color: #aaa;
+  font-family: monospace;
+}
+
+.copyBtn {
+  background: #333;
+  border: 1px solid #444;
+  color: #ccc;
+  font-size: 0.8rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+.copyBtn:hover { background: #444; color: white; }
+
+.topRightIcons { display: flex; gap: 1.5rem; align-items: center; }
+.iconWrap { display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.greenShield {
+  background-color: #00d366;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+}
+
+/* ── Body (video + side panel) ── */
+.body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.mainArea {
+  flex: 1;
+  display: flex;
+  padding: 0.75rem;
+  overflow: hidden;
+}
+
+.videoGrid {
+  flex: 1;
+  display: grid;
+  gap: 0.75rem;
+  align-content: center;
+  justify-items: center;
+  align-items: center;
+}
+
+.videoCard {
+  background: #1c1c1c;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 16/9;
+}
+
+.videoEl {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatarCircle {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: #0b5cff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  font-weight: 500;
+  color: white;
+}
+
+.participantName {
+  position: absolute;
+  bottom: 0.6rem;
+  left: 0.6rem;
+  background: rgba(0, 0, 0, 0.65);
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* ── Side Panel ── */
+.sidePanel {
+  width: 320px;
+  flex-shrink: 0;
+  background: #1c1c1c;
+  border-left: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #333;
+  font-size: 1rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.closePanel {
+  background: none;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+.closePanel:hover { background: #333; color: white; }
+
+/* ── Participants Panel ── */
+.participantsList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0;
+}
+
+.participantRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1.25rem;
+  transition: background 0.2s;
+}
+.participantRow:hover { background: #2a2a2a; }
+
+.pAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #0b5cff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: white;
+  flex-shrink: 0;
+}
+
+.pInfo { flex: 1; min-width: 0; }
+
+.pName {
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.pIcons { display: flex; gap: 0.5rem; align-items: center; }
+
+/* ── Chat Panel ── */
+.chatPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chatMessages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  scrollbar-width: thin;
+  scrollbar-color: #444 transparent;
+}
+
+.chatEmpty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: #666;
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.chatEmptyHint {
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.chatMsg {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  max-width: 85%;
+}
+
+.chatMsgSelf {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.chatSender {
+  font-size: 0.75rem;
+  color: #888;
+  padding-left: 0.2rem;
+}
+
+.chatBubble {
+  background: #333;
+  padding: 0.55rem 0.85rem;
+  border-radius: 12px;
+  border-bottom-left-radius: 4px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.chatMsgSelf .chatBubble {
+  background: #0b5cff;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 4px;
+}
+
+.chatTime {
+  font-size: 0.7rem;
+  color: #666;
+  padding: 0 0.2rem;
+}
+
+.chatInputRow {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid #333;
+  align-items: center;
+}
+
+.chatInput {
+  flex: 1;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 0.6rem 0.85rem;
+  color: white;
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  resize: none;
+  transition: border-color 0.2s;
+}
+.chatInput:focus { border-color: #0b5cff; }
+.chatInput::placeholder { color: #666; }
+
+.chatSendBtn {
+  background: #0b5cff;
+  border: none;
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.chatSendBtn:hover:not(:disabled) { background: #0047d1; }
+.chatSendBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Controls bar ── */
+.controlsBar {
+  background: #1c1c1c;
+  padding: 0.6rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #333;
+  flex-shrink: 0;
+}
+
+.leftControls, .centerControls, .rightControls {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+.centerControls { gap: 1.75rem; }
+
+.controlBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  background: none;
+  border: none;
+  color: #ccc;
+  cursor: pointer;
+  transition: color 0.2s;
+  font-size: 0.68rem;
+  font-family: inherit;
+  padding: 0.4rem 0.5rem;
+  border-radius: 8px;
+}
+.controlBtn:hover { color: white; }
+
+.activeControl {
+  color: white;
+  background: #333;
+}
+
+.controlIconWrap {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.chevron {
+  position: absolute;
+  right: -16px;
+  top: 4px;
+}
+
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -14px;
+  background: #0b5cff;
+  color: white;
+  font-size: 0.6rem;
+  padding: 1px 5px;
+  border-radius: 8px;
+  min-width: 16px;
+  text-align: center;
+}
+
+.endBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  background: none;
+  border: none;
+  color: #ccc;
+  cursor: pointer;
+  font-size: 0.68rem;
+  font-family: inherit;
+}
+.endBtn:hover .endIcon { background: #ff3333; }
+
+.endIcon {
+  background: #e02828;
+  border-radius: 6px;
+  width: 32px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  transition: background 0.2s;
+}

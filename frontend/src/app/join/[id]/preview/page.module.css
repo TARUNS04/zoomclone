@@ -1,0 +1,281 @@
+.previewContainer {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #1a1a1a;
+  color: white;
+  align-items: center;
+  justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  position: relative;
+}
+
+.topBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #242424;
+  border-bottom: 1px solid #111;
+}
+
+.topBar h3 {
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-left: 0.75rem;
+  color: #ccc;
+}
+
+.windowControls {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.dot.red    { background-color: #ff5f56; }
+.dot.yellow { background-color: #ffbd2e; }
+.dot.green  { background-color: #27c93f; }
+
+/* Main card */
+.mainCard {
+  width: 100%;
+  max-width: 780px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0 1rem;
+}
+
+/* Video preview box */
+.videoBox {
+  background-color: #111;
+  aspect-ratio: 16/9;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 0;
+}
+
+.videoEl {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+  transform: scaleX(-1); /* mirror like real camera preview */
+}
+
+.avatar {
+  width: 110px;
+  height: 110px;
+  border-radius: 12px;
+  background-color: #ff742e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.5rem;
+  font-weight: 600;
+  color: white;
+}
+
+.permissionBanner {
+  position: absolute;
+  bottom: 5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(224, 40, 40, 0.85);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Floating audio/video controls inside video box */
+.floatingControls {
+  position: absolute;
+  bottom: 1.25rem;
+  display: flex;
+  gap: 0;
+  background: rgba(40, 40, 40, 0.92);
+  padding: 0.6rem 1.25rem;
+  border-radius: 14px;
+  gap: 1.5rem;
+  border: 1px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(8px);
+}
+
+.controlBtn {
+  background: none;
+  border: none;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-family: inherit;
+  padding: 0.2rem 0.5rem;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.controlBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* When mic/video is off — icon turns red */
+.controlOff {
+  color: #e02828;
+}
+
+/* Backgrounds button */
+.bgBtn {
+  position: absolute;
+  bottom: 1.25rem;
+  right: 1.25rem;
+  background: rgba(20, 20, 20, 0.85);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: white;
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  cursor: pointer;
+  font-family: inherit;
+  backdrop-filter: blur(8px);
+  transition: background 0.2s;
+}
+.bgBtn:hover { background: rgba(50, 50, 50, 0.9); }
+
+/* Device dropdowns */
+.dropdowns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  background: #0a0a0a;
+  padding: 0.85rem 1rem;
+  border-radius: 0 0 8px 8px;
+  margin-bottom: 1rem;
+}
+
+.dropdownWrapper {
+  position: relative;
+}
+
+.selectBox {
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  color: #ddd;
+  padding: 0.65rem 0.9rem;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.88rem;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.2s;
+}
+.selectBox:hover { border-color: #555; }
+
+.selectLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.deviceLabel {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+  transition: transform 0.2s;
+}
+
+/* Device dropdown menu */
+.deviceMenu {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 8px;
+  overflow: hidden;
+  z-index: 50;
+  box-shadow: 0 -8px 24px rgba(0,0,0,0.5);
+}
+
+.deviceOption {
+  padding: 0.65rem 1rem;
+  font-size: 0.88rem;
+  cursor: pointer;
+  color: #ccc;
+  transition: background 0.15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.deviceOption:hover { background: #383838; color: white; }
+
+.deviceSelected {
+  color: #0b5cff;
+  font-weight: 500;
+}
+
+/* Footer row */
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.checkboxWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #aaa;
+  font-size: 0.88rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: #0b5cff;
+  cursor: pointer;
+}
+
+.startBtn {
+  background: #0b5cff;
+  color: white;
+  border: none;
+  padding: 0.7rem 4rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.startBtn:hover { background: #0047d1; }
