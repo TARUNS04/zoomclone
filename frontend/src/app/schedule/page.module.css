@@ -1,0 +1,356 @@
+.container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #242424;
+  color: #e0e0e0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+}
+
+/* OS Window Header */
+.windowHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background-color: #242424;
+  position: relative;
+  -webkit-app-region: drag;
+}
+.windowControls {
+  position: absolute;
+  left: 16px;
+  display: flex;
+  gap: 8px;
+}
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.dot.red { background-color: #ff5f56; }
+.dot.yellow { background-color: #ffbd2e; }
+.dot.green { background-color: #27c93f; }
+.windowTitle {
+  font-weight: 500;
+  color: #e0e0e0;
+}
+
+/* Main Area Layout */
+.mainArea {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  border-top: 1px solid #333;
+}
+
+.leftPanel {
+  flex: 2;
+  padding: 24px 32px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.rightPanel {
+  flex: 1;
+  border-left: 1px solid #333;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background-color: #212121;
+}
+
+/* Left Panel Elements */
+.titleInput {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 20px;
+  font-weight: 600;
+  outline: none;
+  width: 100%;
+}
+
+.tabs {
+  display: flex;
+  gap: 24px;
+  border-bottom: 1px solid #333;
+  margin-top: -8px;
+}
+.tab {
+  background: none;
+  border: none;
+  color: #888;
+  padding: 8px 0;
+  font-size: 14px;
+  cursor: pointer;
+  position: relative;
+  font-weight: 500;
+}
+.tab.activeTab {
+  color: white;
+}
+.tab.activeTab::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #0b5cff;
+}
+
+.formGroup {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.iconCol {
+  width: 24px;
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+}
+.contentCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Form Inputs */
+.timeRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.dateInput, .timeInput {
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 16px; /* Pill shaped */
+  font-size: 14px;
+  outline: none;
+}
+.timeInput { width: 90px; }
+.dateInput { width: 110px; }
+.arrow { color: #555; }
+
+.optionsRow {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: #bbb;
+}
+.timezone {
+  color: #bbb;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.repeatRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #bbb;
+}
+
+.dropdownBtn {
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.separator {
+  height: 1px;
+  background-color: #333;
+  margin: 4px 0;
+}
+
+.zoomRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.link {
+  color: #5294ff;
+  text-decoration: none;
+}
+.link:hover { text-decoration: underline; }
+
+.inputBox {
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #aaa;
+  cursor: pointer;
+}
+
+.textarea {
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: white;
+  min-height: 60px;
+  resize: vertical;
+  font-family: inherit;
+  outline: none;
+}
+
+.calendarIcon {
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid #aaa;
+  border-radius: 3px;
+  border-top-width: 4px;
+}
+.profileRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ddd;
+}
+.blueDot {
+  width: 10px;
+  height: 10px;
+  background-color: #0b5cff;
+  border-radius: 3px;
+}
+
+/* Right Panel - Invitees */
+.inviteesHeader {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.inviteeInputWrap {
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 6px 8px;
+  min-height: 38px;
+  display: flex;
+  flex-direction: column;
+}
+.inviteePills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.pill {
+  background-color: #444;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+}
+.pill button {
+  background: none;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+.pill button:hover { color: white; }
+
+.inviteeInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: white;
+  outline: none;
+  min-width: 100px;
+  font-size: 14px;
+}
+
+.inviteeList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+.inviteeRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.inviteeAvatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #0b5cff;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+}
+.inviteeEmail {
+  color: #ddd;
+  font-size: 13px;
+}
+
+/* Footer */
+.footer {
+  padding: 16px 32px;
+  border-top: 1px solid #333;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.cancelBtn {
+  background-color: transparent;
+  border: 1px solid #555;
+  color: #ddd;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+.cancelBtn:hover { background-color: #333; }
+
+.saveBtn {
+  background-color: #0b5cff;
+  border: none;
+  color: white;
+  padding: 8px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+.saveBtn:hover { background-color: #0047d1; }
