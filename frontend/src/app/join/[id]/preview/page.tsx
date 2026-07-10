@@ -129,7 +129,7 @@ export default function Preview() {
   const handleStart = () => {
     // Stop preview stream — the meeting room will start its own stream
     localStreamRef.current?.getTracks().forEach(t => t.stop());
-    router.push(`/meeting/${meetingId}`);
+    router.push(`/meeting/${meetingId}?audio=${!isMuted}&video=${!isVideoOff}&micId=${selectedMic}&camId=${selectedCam}`);
   };
 
   const selectedMicLabel = micDevices.find(d => d.deviceId === selectedMic)?.label || "Default Microphone";

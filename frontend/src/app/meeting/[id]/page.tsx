@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   Mic, MicOff, Video as VideoIcon, VideoOff, Users, MessageSquare,
   Heart, ArrowUpSquare, ShieldCheck, MoreHorizontal, X,
@@ -39,9 +39,15 @@ export default function MeetingRoom() {
   const router = useRouter();
   const meetingId = params.id as string;
 
+  const searchParams = useSearchParams();
+  const initialAudio = searchParams.get("audio") !== "false";
+  const initialVideo = searchParams.get("video") !== "false";
+  const micId = searchParams.get("micId") || "";
+  const camId = searchParams.get("camId") || "";
+
   const [user, setUser] = useState<ReturnType<typeof getUser>>(null);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isVideoOff, setIsVideoOff] = useState(false);
+  const [isMuted, setIsMuted] = useState(!initialAudio);
+  const [isVideoOff, setIsVideoOff] = useState(!initialVideo);
   const [participants, setParticipants] = useState<Map<string, Participant>>(new Map());
   const [connectionStatus, setConnectionStatus] = useState<"connecting" | "connected" | "error">("connecting");
   const [sidePanel, setSidePanel] = useState<SidePanel>(null);
@@ -77,14 +83,24 @@ export default function MeetingRoom() {
 
   const getLocalStream = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      const constraints: MediaStreamConstraints = {
+        audio: micId ? { deviceId: { exact: micId } } : true,
+        video: camId ? { deviceId: { exact: camId } } : true,
+      };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       localStreamRef.current = stream;
+      
+      // Apply initial muted/video-off states
+      stream.getAudioTracks().forEach(t => { t.enabled = initialAudio; });
+      stream.getVideoTracks().forEach(t => { t.enabled = initialVideo; });
+      
       if (localVideoRef.current) localVideoRef.current.srcObject = stream;
       return stream;
     } catch {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
         localStreamRef.current = stream;
+        stream.getAudioTracks().forEach(t => { t.enabled = initialAudio; });
         setIsVideoOff(true);
         return stream;
       } catch {
@@ -97,6 +113,7 @@ export default function MeetingRoom() {
   const createPeer = useCallback((targetSocketId: string, isInitiator: boolean) => {
     peersRef.current.get(targetSocketId)?.close();
     const peer = new RTCPeerConnection(STUN_SERVERS);
+    const candidateQueue: RTCIceCandidateInit[] = [];
 
     localStreamRef.current?.getTracks().forEach(track => {
       peer.addTrack(track, localStreamRef.current!);
@@ -122,12 +139,22 @@ export default function MeetingRoom() {
       }
     };
 
+    peer.onsignalingstatechange = () => {
+      if (peer.remoteDescription && candidateQueue.length > 0) {
+        candidateQueue.forEach(c => peer.addIceCandidate(new RTCIceCandidate(c)).catch(() => {}));
+        candidateQueue.length = 0;
+      }
+    };
+
     if (isInitiator) {
       peer.createOffer().then(offer => {
         peer.setLocalDescription(offer);
         wsRef.current?.send(JSON.stringify({ type: "offer", targetId: targetSocketId, sdp: offer }));
       });
     }
+
+    // Attach queue to the peer object dynamically so handleWsMessage can push to it
+    (peer as any).candidateQueue = candidateQueue;
 
     peersRef.current.set(targetSocketId, peer);
     return peer;
@@ -184,7 +211,11 @@ export default function MeetingRoom() {
       case "ice-candidate": {
         const peer = peersRef.current.get(msg.fromId);
         if (peer && msg.candidate) {
-          try { await peer.addIceCandidate(new RTCIceCandidate(msg.candidate)); } catch {}
+          if (peer.remoteDescription) {
+            try { await peer.addIceCandidate(new RTCIceCandidate(msg.candidate)); } catch {}
+          } else {
+            (peer as any).candidateQueue?.push(msg.candidate);
+          }
         }
         break;
       }
