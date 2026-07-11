@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   Mic, MicOff, Video as VideoIcon, VideoOff, Users, MessageSquare,
@@ -44,7 +44,7 @@ interface ChatMessage {
 
 type SidePanel = "chat" | "participants" | null;
 
-export default function MeetingRoom() {
+function MeetingRoom() {
   const params = useParams();
   const router = useRouter();
   const meetingId = params.id as string;
@@ -682,5 +682,13 @@ function RemoteVideo({ participant }: { participant: Participant }) {
       }
       <div className={styles.participantName}>{participant.username}</div>
     </div>
+  );
+}
+
+export default function MeetingRoomPage() {
+  return (
+    <Suspense fallback={null}>
+      <MeetingRoom />
+    </Suspense>
   );
 }
