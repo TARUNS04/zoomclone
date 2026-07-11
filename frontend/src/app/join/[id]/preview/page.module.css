@@ -301,3 +301,53 @@
   transition: background 0.2s;
 }
 .startBtn:hover { background: #0047d1; }
+
+/* ── Mobile Responsiveness ── */
+@media (max-width: 768px) {
+  .mainCard {
+    padding: 0 0.5rem;
+  }
+  
+  .videoBox {
+    width: 100%;
+    /* Keep aspect ratio but allow it to shrink */
+    max-height: 50vh; 
+  }
+
+  .floatingControls {
+    bottom: 0.75rem;
+    padding: 0.5rem 1rem;
+    gap: 1rem;
+  }
+
+  .bgBtn {
+    bottom: 0.75rem;
+    right: 0.75rem;
+    padding: 0.35rem 0.6rem;
+  }
+
+  .dropdowns {
+    grid-template-columns: 1fr; /* Stack vertically */
+    gap: 0.5rem;
+  }
+
+  .deviceLabel {
+    max-width: 65vw; /* Allow more text on mobile before ellipsis */
+  }
+
+  .footer {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+  
+  .footerButtons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .startBtn, .cancelBtn {
+    width: 100%;
+    padding: 0.8rem;
+  }
+}

@@ -159,8 +159,6 @@ export default function Dashboard() {
             <span>Search (⌘E)</span>
           </div>
           <div className={styles.topRight}>
-            <Bell size={20} color="#ccc" />
-            <CalendarCheck size={20} color="#ccc" />
             <div className={styles.profileAvatar}>{user?.username?.[0]?.toUpperCase() || "U"}</div>
           </div>
         </div>
