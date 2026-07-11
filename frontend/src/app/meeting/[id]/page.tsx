@@ -10,13 +10,23 @@ import {
 import { getUser, isAuthenticated } from "@/lib/auth";
 import styles from "./page.module.css";
 
-const WS_BASE = "ws://localhost:8000";
-const STUN_SERVERS = {
-  iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" },
-  ],
-};
+const WS_BASE = process.env.NEXT_PUBLIC_WS_BASE || "ws://localhost:8000";
+
+// TURN is required for reliable connectivity across the public internet
+// (behind NATs/firewalls STUN alone is not enough). Configure via env:
+//   NEXT_PUBLIC_TURN_URL, NEXT_PUBLIC_TURN_USERNAME, NEXT_PUBLIC_TURN_CREDENTIAL
+const iceServers: RTCIceServer[] = [
+  { urls: "stun:stun.l.google.com:19302" },
+  { urls: "stun:stun1.l.google.com:19302" },
+];
+if (process.env.NEXT_PUBLIC_TURN_URL) {
+  iceServers.push({
+    urls: process.env.NEXT_PUBLIC_TURN_URL,
+    username: process.env.NEXT_PUBLIC_TURN_USERNAME,
+    credential: process.env.NEXT_PUBLIC_TURN_CREDENTIAL,
+  });
+}
+const STUN_SERVERS = { iceServers };
 
 interface Participant {
   socketId: string;
