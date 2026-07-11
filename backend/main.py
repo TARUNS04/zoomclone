@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from typing import List, Dict
 import uuid
 import json
+import os
 
 import models
 import schemas
@@ -18,9 +19,16 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Zoom Clone API")
 
+# Public URL of the deployed frontend, e.g. https://zoomclone.vercel.app
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+# Comma-separated list of allowed origins (defaults to FRONTEND_URL)
+ALLOWED_ORIGINS = [
+    o.strip() for o in os.getenv("ALLOWED_ORIGINS", FRONTEND_URL).split(",") if o.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -212,7 +220,7 @@ def create_meeting(meeting: schemas.MeetingCreate, db: Session = Depends(get_db)
     db.add(db_meeting)
     db.commit()
     db.refresh(db_meeting)
-    db_meeting.invite_link = f"http://localhost:3000/join/{db_meeting.id}/preview"
+    db_meeting.invite_link = f"{FRONTEND_URL}/join/{db_meeting.id}/preview"
     db.commit()
     
     if meeting.invitees:
