@@ -51,12 +51,12 @@ export default function Dashboard() {
     return () => clearInterval(timer);
   }, []);
 
-  const fetchMeetings = async () => {
+  async function fetchMeetings() {
     try {
       const data = await apiFetch("/meetings/");
       setMeetings(data);
     } catch {}
-  };
+  }
 
   const handleNewMeeting = async () => {
     setCreating(true);
