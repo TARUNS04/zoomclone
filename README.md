@@ -50,6 +50,20 @@ The core of this application relies on a **Mesh Architecture** using **WebRTC** 
 - **Database: SQLite & SQLAlchemy**
   - *Why:* SQLite provides a lightweight, frictionless development experience. Paired with SQLAlchemy (a powerful ORM), it allows for rapid prototyping of the User and Meeting schema while being easily swappable for PostgreSQL in a production environment (like on Render).
 
+### Database Schema & Data Storage
+All persistent data is stored in a relational format (SQLite). The ORM (SQLAlchemy) manages the following core tables:
+- **`users` Table:** Stores registered accounts.
+  - `id` (UUID), `email`, `username`, `hashed_password`, `phone_number`, `created_at`.
+- **`meetings` Table:** Stores scheduled meetings and their metadata.
+  - `id` (UUID), `title`, `description`, `scheduled_date`, `duration`, `invite_link`, `created_by` (Foreign Key -> `users.id`).
+- **`meeting_invitees` Table:** Tracks which emails were invited to a specific meeting.
+  - `id` (UUID), `meeting_id` (Foreign Key -> `meetings.id`), `email`.
+
+**In-Memory Storage & Mock Data:** 
+- The application relies on an **In-Memory WebSocket Room Manager** (a Python class instance) to track active meeting sessions. 
+- It maintains dictionaries like `self.rooms` (mapping `meeting_id` to active `WebSocket` connections) and `self.waiting` (tracking users in the waiting room). Because this is in-memory, live meeting state is not persisted to the database and is instantly cleaned up when the meeting ends.
+- There is **no hardcoded mock data** in the repository. The SQLite database is automatically generated on the first run (`models.Base.metadata.create_all(bind=engine)`), starting completely fresh and empty.
+
 ---
 
 ## 🚀 Deployment (Vercel & Render)
