@@ -412,3 +412,165 @@
   color: white;
   transition: background 0.2s;
 }
+
+/* ─── Host controls ─────────────────────────────────────────────── */
+
+.pActionBtn {
+  background: transparent;
+  border: none;
+  padding: 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.pActionBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.hostToolsWrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.hostMenu {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #232333;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 6px;
+  min-width: 220px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 50;
+}
+
+.hostMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  color: #eaeaea;
+  font-size: 14px;
+  text-align: left;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.hostMenuItem:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ─── Overlays & modals ─────────────────────────────────────────── */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 16, 0.82);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.overlayCard,
+.confirmCard {
+  background: #1f1f2b;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 36px 40px;
+  max-width: 440px;
+  width: 90%;
+  text-align: center;
+  color: #f0f0f0;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.overlayCard h2,
+.confirmCard h2 {
+  font-size: 20px;
+  margin: 16px 0 8px;
+}
+
+.overlayCard p,
+.confirmCard p {
+  font-size: 14px;
+  color: #a8a8b3;
+  line-height: 1.5;
+}
+
+.spinner {
+  color: #4a7dff;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.overlayLeaveBtn {
+  margin-top: 22px;
+  padding: 10px 26px;
+  background: #e02828;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.overlayLeaveBtn:hover {
+  background: #c62222;
+}
+
+.confirmIcon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.confirmButtons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.confirmCancel,
+.confirmEnd {
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+}
+
+.confirmCancel {
+  background: rgba(255, 255, 255, 0.1);
+  color: #eaeaea;
+}
+
+.confirmCancel:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.confirmEnd {
+  background: #e02828;
+  color: white;
+}
+
+.confirmEnd:hover {
+  background: #c62222;
+}

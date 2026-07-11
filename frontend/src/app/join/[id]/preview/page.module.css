@@ -266,6 +266,28 @@
   cursor: pointer;
 }
 
+.footerButtons {
+  display: flex;
+  gap: 12px;
+}
+
+.cancelBtn {
+  background: transparent;
+  color: #ccc;
+  border: 1px solid #444;
+  padding: 0.7rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.cancelBtn:hover {
+  background: #333;
+  color: white;
+}
+
 .startBtn {
   background: #0b5cff;
   color: white;

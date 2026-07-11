@@ -16,10 +16,16 @@ class UserOut(BaseModel):
     id: str
     email: str
     username: str
+    phone_number: Optional[str] = None
     created_at: datetime
 
     class Config:
         from_attributes = True
+
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[str] = None
+    phone_number: Optional[str] = None
 
 class Token(BaseModel):
     access_token: str

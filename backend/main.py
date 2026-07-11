@@ -7,7 +7,7 @@ import json
 
 import models
 import schemas
-from database import engine, get_db
+from database import engine, get_db, SessionLocal
 from auth import (
     get_password_hash, verify_password,
     create_access_token, get_current_user
@@ -34,6 +34,21 @@ class RoomManager:
         self.rooms: Dict[str, Dict[str, WebSocket]] = {}
         # socket_id -> user info
         self.user_info: Dict[str, dict] = {}
+        # meeting_ids that a host has started
+        self.started: set = set()
+        # meeting_id -> { socket_id -> (WebSocket, user_info) } for attendees
+        # who arrived before the host started the meeting
+        self.waiting: Dict[str, Dict[str, tuple]] = {}
+
+    def is_started(self, meeting_id: str) -> bool:
+        return meeting_id in self.started
+
+    def mark_started(self, meeting_id: str):
+        self.started.add(meeting_id)
+
+    def mark_ended(self, meeting_id: str):
+        # Reset so a future session again requires the host to start it
+        self.started.discard(meeting_id)
 
     def get_room_peers(self, meeting_id: str, exclude_id: str = None):
         room = self.rooms.get(meeting_id, {})
@@ -58,17 +73,47 @@ class RoomManager:
             **user_info
         }, exclude=socket_id)
 
-    async def leave(self, meeting_id: str, socket_id: str):
-        if meeting_id in self.rooms:
-            self.rooms[meeting_id].pop(socket_id, None)
-            if not self.rooms[meeting_id]:
-                del self.rooms[meeting_id]
+    def add_waiting(self, meeting_id: str, socket_id: str, ws: WebSocket, user_info: dict):
+        if meeting_id not in self.waiting:
+            self.waiting[meeting_id] = {}
+        self.waiting[meeting_id][socket_id] = (ws, user_info)
+
+    async def admit_waiting(self, meeting_id: str):
+        """Move every waiting attendee into the live room (host just started)."""
+        waiting = self.waiting.pop(meeting_id, {})
+        for sid, (ws, info) in waiting.items():
+            try:
+                await ws.send_json({"type": "meeting-started"})
+                await self.join(meeting_id, sid, ws, info)
+            except Exception:
+                pass
+
+    def in_room(self, meeting_id: str, socket_id: str) -> bool:
+        return socket_id in self.rooms.get(meeting_id, {})
+
+    async def disconnect(self, meeting_id: str, socket_id: str):
+        """Unified cleanup for both waiting and in-room sockets."""
+        # Remove from waiting list if present
+        w = self.waiting.get(meeting_id)
+        if w and socket_id in w:
+            w.pop(socket_id, None)
+            if not w:
+                self.waiting.pop(meeting_id, None)
+
+        # Remove from live room if present
+        room = self.rooms.get(meeting_id)
+        was_in_room = bool(room) and socket_id in room
+        if was_in_room:
+            room.pop(socket_id, None)
+            if not room:
+                self.rooms.pop(meeting_id, None)
         self.user_info.pop(socket_id, None)
 
-        await self.broadcast(meeting_id, {
-            "type": "peer-left",
-            "socketId": socket_id
-        })
+        if was_in_room:
+            await self.broadcast(meeting_id, {
+                "type": "peer-left",
+                "socketId": socket_id
+            })
 
     async def send_to(self, meeting_id: str, target_id: str, message: dict):
         room = self.rooms.get(meeting_id, {})
@@ -91,6 +136,15 @@ class RoomManager:
             self.user_info.pop(sid, None)
 
 manager = RoomManager()
+
+def get_meeting_host_id(meeting_id: str):
+    """Look up the creator (host) id for a meeting."""
+    db = SessionLocal()
+    try:
+        meeting = db.query(models.Meeting).filter(models.Meeting.id == meeting_id).first()
+        return meeting.created_by if meeting else None
+    finally:
+        db.close()
 
 # ─── Auth Routes ────────────────────────────────────────────────────────────
 
@@ -124,6 +178,24 @@ def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
 
 @app.get("/auth/me", response_model=schemas.UserOut)
 def get_me(current_user: models.User = Depends(get_current_user)):
+    return current_user
+
+@app.put("/auth/me", response_model=schemas.UserOut)
+def update_me(update_data: schemas.UserUpdate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    if update_data.username is not None and update_data.username != current_user.username:
+        existing = db.query(models.User).filter(models.User.username == update_data.username).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Username already taken")
+        current_user.username = update_data.username
+    if update_data.email is not None and update_data.email != current_user.email:
+        existing = db.query(models.User).filter(models.User.email == update_data.email).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        current_user.email = update_data.email
+    if update_data.phone_number is not None:
+        current_user.phone_number = update_data.phone_number
+    db.commit()
+    db.refresh(current_user)
     return current_user
 
 # ─── Meeting Routes ──────────────────────────────────────────────────────────
@@ -215,15 +287,39 @@ async def meeting_ws(websocket: WebSocket, meeting_id: str):
     await websocket.accept()
     socket_id = str(uuid.uuid4())
     user_info = {}
+    is_host = False
+
+    HOST_ACTIONS = {
+        "host-mute-all", "host-video-off-all",
+        "host-mute-one", "host-video-off-one", "end-meeting"
+    }
 
     try:
         # First message must be "join" with user info
         data = await websocket.receive_json()
         if data.get("type") == "join":
-            user_info = {"username": data.get("username", "Guest"), "userId": data.get("userId", "")}
-            await manager.join(meeting_id, socket_id, websocket, user_info)
-            # Confirm the socket_id back to the client
-            await websocket.send_json({"type": "joined", "socketId": socket_id})
+            user_id = data.get("userId", "")
+            host_id = get_meeting_host_id(meeting_id)
+            is_host = bool(host_id) and host_id == user_id
+            user_info = {
+                "username": data.get("username", "Guest"),
+                "userId": user_id,
+                "isHost": is_host,
+            }
+            # Confirm the socket_id and host status back to the client
+            await websocket.send_json({"type": "joined", "socketId": socket_id, "isHost": is_host})
+
+            if is_host:
+                # Host joining starts the meeting and admits anyone waiting
+                manager.mark_started(meeting_id)
+                await manager.join(meeting_id, socket_id, websocket, user_info)
+                await manager.admit_waiting(meeting_id)
+            elif manager.is_started(meeting_id):
+                await manager.join(meeting_id, socket_id, websocket, user_info)
+            else:
+                # Attendee arrived before the host started — hold in waiting room
+                manager.add_waiting(meeting_id, socket_id, websocket, user_info)
+                await websocket.send_json({"type": "waiting-for-host"})
 
         # Relay loop
         while True:
@@ -239,8 +335,23 @@ async def meeting_ws(websocket: WebSocket, meeting_id: str):
                 msg["fromId"] = socket_id
                 msg["username"] = user_info.get("username", "Guest")
                 await manager.broadcast(meeting_id, msg, exclude=socket_id)
+            elif msg_type in HOST_ACTIONS:
+                # Only the verified host may perform these actions
+                if not user_info.get("isHost"):
+                    continue
+                if msg_type == "host-mute-all":
+                    await manager.broadcast(meeting_id, {"type": "force-mute"}, exclude=socket_id)
+                elif msg_type == "host-video-off-all":
+                    await manager.broadcast(meeting_id, {"type": "force-video-off"}, exclude=socket_id)
+                elif msg_type == "host-mute-one" and target_id:
+                    await manager.send_to(meeting_id, target_id, {"type": "force-mute"})
+                elif msg_type == "host-video-off-one" and target_id:
+                    await manager.send_to(meeting_id, target_id, {"type": "force-video-off"})
+                elif msg_type == "end-meeting":
+                    manager.mark_ended(meeting_id)
+                    await manager.broadcast(meeting_id, {"type": "meeting-ended"})
 
     except WebSocketDisconnect:
-        await manager.leave(meeting_id, socket_id)
-    except Exception as e:
-        await manager.leave(meeting_id, socket_id)
+        await manager.disconnect(meeting_id, socket_id)
+    except Exception:
+        await manager.disconnect(meeting_id, socket_id)

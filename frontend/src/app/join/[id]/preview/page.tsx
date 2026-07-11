@@ -34,6 +34,8 @@ export default function Preview() {
 
   const localStreamRef = useRef<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  // Use a ref for stopStream so event listeners always call the latest version
+  const stopStreamRef = useRef<() => void>(() => {});
 
   // Auth check
   useEffect(() => {
@@ -90,10 +92,52 @@ export default function Preview() {
     }
   };
 
+  const stopStream = () => {
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(t => {
+        t.stop();
+        t.enabled = false;
+      });
+      localStreamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  };
+
+  // Keep stopStreamRef always up to date
+  stopStreamRef.current = stopStream;
+
   useEffect(() => {
-    startStream();
+    let cancelled = false;
+
+    const initStream = async () => {
+      await startStream();
+      if (cancelled) {
+        stopStreamRef.current();
+      }
+    };
+    initStream();
+
+    const onLeave = () => stopStreamRef.current();
+    
+    // Force a hard redirect when user clicks browser back button
+    // This guarantees the camera light turns off
+    const handlePopState = () => {
+      stopStreamRef.current();
+      window.location.href = "/";
+    };
+
+    window.addEventListener("pagehide", onLeave);
+    window.addEventListener("beforeunload", onLeave);
+    window.addEventListener("popstate", handlePopState);
+
     return () => {
-      localStreamRef.current?.getTracks().forEach(t => t.stop());
+      cancelled = true;
+      stopStreamRef.current();
+      window.removeEventListener("pagehide", onLeave);
+      window.removeEventListener("beforeunload", onLeave);
+      window.removeEventListener("popstate", handlePopState);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -126,10 +170,15 @@ export default function Preview() {
     startStream(selectedMic, deviceId);
   };
 
+  const handleCancel = () => {
+    stopStream();
+    window.location.href = "/";
+  };
+
   const handleStart = () => {
     // Stop preview stream — the meeting room will start its own stream
-    localStreamRef.current?.getTracks().forEach(t => t.stop());
-    router.push(`/meeting/${meetingId}?audio=${!isMuted}&video=${!isVideoOff}&micId=${selectedMic}&camId=${selectedCam}`);
+    stopStream();
+    window.location.href = `/meeting/${meetingId}?audio=${!isMuted}&video=${!isVideoOff}&micId=${selectedMic}&camId=${selectedCam}`;
   };
 
   const selectedMicLabel = micDevices.find(d => d.deviceId === selectedMic)?.label || "Default Microphone";
@@ -138,11 +187,6 @@ export default function Preview() {
   return (
     <div className={styles.previewContainer} onClick={() => { setShowMicDropdown(false); setShowCamDropdown(false); }}>
       <div className={styles.topBar}>
-        <div className={styles.windowControls}>
-          <div className={`${styles.dot} ${styles.red}`}></div>
-          <div className={`${styles.dot} ${styles.yellow}`}></div>
-          <div className={`${styles.dot} ${styles.green}`}></div>
-        </div>
         <h3>{user?.username || "Guest"}'s Zoom Meeting</h3>
       </div>
 
@@ -262,9 +306,14 @@ export default function Preview() {
             Always show this preview when joining
             <Info size={15} />
           </label>
-          <button className={styles.startBtn} onClick={handleStart}>
-            Start
-          </button>
+          <div className={styles.footerButtons}>
+            <button className={styles.cancelBtn} onClick={handleCancel}>
+              Cancel
+            </button>
+            <button className={styles.startBtn} onClick={handleStart}>
+              Start
+            </button>
+          </div>
         </div>
       </div>
     </div>
