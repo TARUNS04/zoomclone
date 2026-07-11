@@ -10,7 +10,7 @@ import {
 import { getUser, isAuthenticated } from "@/lib/auth";
 import styles from "./page.module.css";
 
-const WS_BASE = "ws://localhost:8000";
+const WS_BASE = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000";
 const STUN_SERVERS = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
