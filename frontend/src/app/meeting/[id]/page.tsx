@@ -5,7 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   Mic, MicOff, Video as VideoIcon, VideoOff, Users, MessageSquare,
   Heart, ArrowUpSquare, ShieldCheck, MoreHorizontal, X,
-  PenTool, Wand2, Grid, ChevronUp, Send, Mic2, Loader2, AlertTriangle
+  PenTool, Wand2, Grid, ChevronUp, ChevronLeft, ChevronRight, Send, Mic2, Loader2, AlertTriangle
 } from "lucide-react";
 import { getUser, isAuthenticated } from "@/lib/auth";
 import styles from "./page.module.css";
@@ -54,6 +54,7 @@ export default function MeetingRoom() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
 
   // Host control state
   const [isHost, setIsHost] = useState(false);
@@ -393,11 +394,24 @@ export default function MeetingRoom() {
   };
 
   const participantList = Array.from(participants.values());
-  const totalCount = participantList.length + 1;
+  const allVideos: { isLocal: boolean; id: string; p?: Participant }[] = [{ isLocal: true, id: "local" }, ...participantList.map(p => ({ isLocal: false, id: p.socketId, p }))];
+  
+  const MAX_PER_PAGE = 6;
+  const totalPages = Math.ceil(allVideos.length / MAX_PER_PAGE);
+  const currentVideos = allVideos.slice(currentPage * MAX_PER_PAGE, (currentPage + 1) * MAX_PER_PAGE);
+  const totalCount = currentVideos.length;
+
   const hasSidePanel = sidePanel !== null;
   const gridCols = hasSidePanel
     ? (totalCount <= 1 ? 1 : 2)
     : (totalCount <= 1 ? 1 : totalCount <= 4 ? 2 : 3);
+
+  // Auto-fix currentPage if participants leave and the page goes out of bounds
+  useEffect(() => {
+    if (currentPage >= totalPages && totalPages > 0) {
+      setCurrentPage(totalPages - 1);
+    }
+  }, [totalPages, currentPage]);
 
   return (
     <div className={styles.roomContainer}>
@@ -421,19 +435,45 @@ export default function MeetingRoom() {
       {/* Body = video area + side panel */}
       <div className={styles.body}>
         <main className={styles.mainArea}>
+          {totalPages > 1 && (
+            <button 
+              className={styles.carouselBtn} 
+              disabled={currentPage === 0} 
+              onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+            >
+              <ChevronLeft size={24} />
+            </button>
+          )}
+
           <div className={styles.videoGrid} style={{ gridTemplateColumns: `repeat(${gridCols}, 1fr)` }}>
-            {/* Local tile */}
-            <div className={styles.videoCard}>
-              {isVideoOff
-                ? <div className={styles.avatarCircle}>{user?.username?.[0]?.toUpperCase() || "Y"}</div>
-                : <video ref={localVideoRef} autoPlay muted playsInline className={styles.videoEl} />
+            {currentVideos.map((video) => {
+              if (video.isLocal) {
+                return (
+                  <div key="local" className={styles.videoCard}>
+                    {isVideoOff
+                      ? <div className={styles.avatarCircle}>{user?.username?.[0]?.toUpperCase() || "Y"}</div>
+                      : <video ref={localVideoRef} autoPlay muted playsInline className={`${styles.videoEl} ${styles.mirroredVideo}`} />
+                    }
+                    <div className={styles.participantName}>
+                      {user?.username || "You"} (You) {isMuted && <MicOff size={12} />}
+                    </div>
+                  </div>
+                );
+              } else {
+                return <RemoteVideo key={video.id} participant={video.p!} />;
               }
-              <div className={styles.participantName}>
-                {user?.username || "You"} (You) {isMuted && <MicOff size={12} />}
-              </div>
-            </div>
-            {participantList.map(p => <RemoteVideo key={p.socketId} participant={p} />)}
+            })}
           </div>
+
+          {totalPages > 1 && (
+            <button 
+              className={styles.carouselBtn} 
+              disabled={currentPage === totalPages - 1} 
+              onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+            >
+              <ChevronRight size={24} />
+            </button>
+          )}
         </main>
 
         {/* Side panel */}
