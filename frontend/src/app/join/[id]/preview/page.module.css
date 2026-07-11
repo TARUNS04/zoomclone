@@ -105,8 +105,8 @@
 .floatingControls {
   position: absolute;
   bottom: 1.25rem;
+  left: 1.25rem;
   display: flex;
-  gap: 0;
   background: rgba(40, 40, 40, 0.92);
   padding: 0.6rem 1.25rem;
   border-radius: 14px;
@@ -164,7 +164,7 @@
 /* Device dropdowns */
 .dropdowns {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 0.75rem;
   background: #0a0a0a;
   padding: 0.85rem 1rem;
@@ -251,12 +251,13 @@
 
 .checkboxWrapper {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
   color: #aaa;
   font-size: 0.88rem;
   cursor: pointer;
   user-select: none;
+  line-height: 1.4;
 }
 
 .checkbox {
@@ -310,29 +311,29 @@
   
   .videoBox {
     width: 100%;
-    /* Keep aspect ratio but allow it to shrink */
     max-height: 50vh; 
   }
 
   .floatingControls {
     bottom: 0.75rem;
-    padding: 0.5rem 1rem;
-    gap: 1rem;
+    left: 0.75rem;
+    padding: 0.4rem 0.8rem;
+    gap: 0.75rem;
   }
 
   .bgBtn {
     bottom: 0.75rem;
     right: 0.75rem;
-    padding: 0.35rem 0.6rem;
+    padding: 0.4rem 0.8rem;
+    font-size: 0; /* Hide text on small screens */
   }
 
-  .dropdowns {
-    grid-template-columns: 1fr; /* Stack vertically */
-    gap: 0.5rem;
+  .bgBtn svg {
+    margin: 0;
   }
 
   .deviceLabel {
-    max-width: 65vw; /* Allow more text on mobile before ellipsis */
+    max-width: 65vw;
   }
 
   .footer {
