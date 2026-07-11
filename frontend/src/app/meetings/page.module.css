@@ -1,0 +1,53 @@
+.meetingsPageContainer {
+  padding: 40px 60px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.meetingsPageTitle {
+  font-size: 28px;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 32px;
+}
+
+.meetingsSection {
+  margin-bottom: 40px;
+}
+
+.meetingsSectionTitle {
+  font-size: 16px;
+  font-weight: 500;
+  color: #aaa;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #333;
+  padding-bottom: 8px;
+}
+
+.meetingsEmptyRow {
+  color: #666;
+  font-size: 14px;
+  padding: 16px 0;
+}
+
+.meetingsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.startMeetingBtn {
+  background-color: #0b5cff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.startMeetingBtn:hover {
+  background-color: #0047d1;
+}

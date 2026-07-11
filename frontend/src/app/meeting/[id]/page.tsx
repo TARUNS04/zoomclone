@@ -5,7 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   Mic, MicOff, Video as VideoIcon, VideoOff, Users, MessageSquare,
   Heart, ArrowUpSquare, ShieldCheck, MoreHorizontal, X,
-  PenTool, Wand2, Grid, ChevronUp, Send, Mic2
+  PenTool, Wand2, Grid, ChevronUp, Send, Mic2, Loader2, AlertTriangle
 } from "lucide-react";
 import { getUser, isAuthenticated } from "@/lib/auth";
 import styles from "./page.module.css";
@@ -55,6 +55,13 @@ export default function MeetingRoom() {
   const [chatInput, setChatInput] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
 
+  // Host control state
+  const [isHost, setIsHost] = useState(false);
+  const [waitingForHost, setWaitingForHost] = useState(false);
+  const [meetingEnded, setMeetingEnded] = useState(false);
+  const [showHostMenu, setShowHostMenu] = useState(false);
+  const [showEndConfirm, setShowEndConfirm] = useState(false);
+
   const localStreamRef = useRef<MediaStream | null>(null);
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -82,6 +89,11 @@ export default function MeetingRoom() {
   }, [sidePanel, chatMessages]);
 
   const getLocalStream = async () => {
+    // Stop any existing stream first (handles React strict mode double-mount)
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(t => t.stop());
+      localStreamRef.current = null;
+    }
     try {
       const constraints: MediaStreamConstraints = {
         audio: micId ? { deviceId: { exact: micId } } : true,
@@ -160,10 +172,44 @@ export default function MeetingRoom() {
     return peer;
   }, []);
 
+  const doCleanup = useCallback(() => {
+    wsRef.current?.close();
+    wsRef.current = null;
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(t => { t.stop(); t.enabled = false; });
+      localStreamRef.current = null;
+    }
+    if (localVideoRef.current) localVideoRef.current.srcObject = null;
+    peersRef.current.forEach(p => p.close());
+    peersRef.current.clear();
+    setupDoneRef.current = false;
+  }, []);
+
   const handleWsMessage = useCallback(async (msg: any) => {
     switch (msg.type) {
       case "joined":
         setConnectionStatus("connected");
+        setIsHost(!!msg.isHost);
+        break;
+      case "waiting-for-host":
+        setWaitingForHost(true);
+        break;
+      case "meeting-started":
+        setWaitingForHost(false);
+        break;
+      case "force-mute":
+        // Host muted us. We can't be force-unmuted, only muted.
+        localStreamRef.current?.getAudioTracks().forEach(t => { t.enabled = false; });
+        setIsMuted(true);
+        break;
+      case "force-video-off":
+        localStreamRef.current?.getVideoTracks().forEach(t => { t.enabled = false; });
+        setIsVideoOff(true);
+        break;
+      case "meeting-ended":
+        setMeetingEnded(true);
+        doCleanup();
+        setTimeout(() => { window.location.href = "/"; }, 2500);
         break;
       case "room-peers":
         for (const peer of msg.peers) {
@@ -232,16 +278,21 @@ export default function MeetingRoom() {
         break;
       }
     }
-  }, [createPeer]);
+  }, [createPeer, doCleanup]);
 
   useEffect(() => {
     if (!user) return;
-    if (setupDoneRef.current) return;
-    setupDoneRef.current = true;
 
     let ws: WebSocket;
+    let cancelled = false;
+
     const setup = async () => {
       await getLocalStream();
+      if (cancelled) {
+        // Component unmounted during async setup, stop stream
+        localStreamRef.current?.getTracks().forEach(t => t.stop());
+        return;
+      }
       ws = new WebSocket(`${WS_BASE}/ws/meeting/${meetingId}`);
       wsRef.current = ws;
       ws.onopen = () => {
@@ -255,9 +306,20 @@ export default function MeetingRoom() {
     setup();
 
     return () => {
+      cancelled = true;
       ws?.close();
-      localStreamRef.current?.getTracks().forEach(t => t.stop());
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach(t => {
+          t.stop();
+          t.enabled = false;
+        });
+        localStreamRef.current = null;
+      }
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = null;
+      }
       peersRef.current.forEach(p => p.close());
+      peersRef.current.clear();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, meetingId]);
@@ -293,10 +355,37 @@ export default function MeetingRoom() {
     setIsVideoOff(v => !v);
   };
 
+  const wsSend = (payload: object) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(payload));
+    }
+  };
+
+  // Host tools: mute / turn off video for everyone (cannot turn them back on)
+  const muteAll = () => { wsSend({ type: "host-mute-all" }); setShowHostMenu(false); };
+  const videoOffAll = () => { wsSend({ type: "host-video-off-all" }); setShowHostMenu(false); };
+  const muteParticipant = (socketId: string) => wsSend({ type: "host-mute-one", targetId: socketId });
+  const videoOffParticipant = (socketId: string) => wsSend({ type: "host-video-off-one", targetId: socketId });
+
+  const leaveMeeting = () => {
+    doCleanup();
+    // Hard redirect — forces browser to fully release camera/mic
+    window.location.href = "/";
+  };
+
+  // "End" button: attendees just leave; the host is asked to confirm ending for all
   const handleEnd = () => {
-    wsRef.current?.close();
-    localStreamRef.current?.getTracks().forEach(t => t.stop());
-    router.push("/");
+    if (isHost) {
+      setShowEndConfirm(true);
+    } else {
+      leaveMeeting();
+    }
+  };
+
+  const endForAll = () => {
+    wsSend({ type: "end-meeting" });
+    setShowEndConfirm(false);
+    leaveMeeting();
   };
 
   const copyInviteLink = () => {
@@ -362,7 +451,9 @@ export default function MeetingRoom() {
                 <div className={styles.participantRow}>
                   <div className={styles.pAvatar}>{user?.username?.[0]?.toUpperCase() || "Y"}</div>
                   <div className={styles.pInfo}>
-                    <span className={styles.pName}>{user?.username || "You"} (Host, Me)</span>
+                    <span className={styles.pName}>
+                      {user?.username || "You"} ({isHost ? "Host, Me" : "Me"})
+                    </span>
                   </div>
                   <div className={styles.pIcons}>
                     {isMuted ? <MicOff size={16} color="#e02828" /> : <Mic2 size={16} color="#aaa" />}
@@ -377,8 +468,29 @@ export default function MeetingRoom() {
                       <span className={styles.pName}>{p.username}</span>
                     </div>
                     <div className={styles.pIcons}>
-                      <Mic2 size={16} color="#aaa" />
-                      <VideoIcon size={16} color="#aaa" />
+                      {isHost ? (
+                        <>
+                          <button
+                            className={styles.pActionBtn}
+                            title="Mute participant"
+                            onClick={() => muteParticipant(p.socketId)}
+                          >
+                            <Mic2 size={16} color="#aaa" />
+                          </button>
+                          <button
+                            className={styles.pActionBtn}
+                            title="Turn off participant's video"
+                            onClick={() => videoOffParticipant(p.socketId)}
+                          >
+                            <VideoIcon size={16} color="#aaa" />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <Mic2 size={16} color="#aaa" />
+                          <VideoIcon size={16} color="#aaa" />
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -470,10 +582,27 @@ export default function MeetingRoom() {
             <div className={styles.controlIconWrap}><ArrowUpSquare size={22} /></div>
             <span>Share</span>
           </button>
-          <button className={styles.controlBtn}>
-            <div className={styles.controlIconWrap}><ShieldCheck size={22} /></div>
-            <span>Host tools</span>
-          </button>
+          {isHost && (
+            <div className={styles.hostToolsWrap}>
+              {showHostMenu && (
+                <div className={styles.hostMenu}>
+                  <button className={styles.hostMenuItem} onClick={muteAll}>
+                    <MicOff size={16} /> Mute all
+                  </button>
+                  <button className={styles.hostMenuItem} onClick={videoOffAll}>
+                    <VideoOff size={16} /> Turn off everyone's video
+                  </button>
+                </div>
+              )}
+              <button
+                className={`${styles.controlBtn} ${showHostMenu ? styles.activeControl : ""}`}
+                onClick={() => setShowHostMenu(s => !s)}
+              >
+                <div className={styles.controlIconWrap}><ShieldCheck size={22} /></div>
+                <span>Host tools</span>
+              </button>
+            </div>
+          )}
           <button className={styles.controlBtn}>
             <div className={styles.controlIconWrap}><MoreHorizontal size={22} /></div>
             <span>More</span>
@@ -483,10 +612,47 @@ export default function MeetingRoom() {
         <div className={styles.rightControls}>
           <button className={styles.endBtn} onClick={handleEnd}>
             <div className={styles.endIcon}><X size={16} /></div>
-            <span>End</span>
+            <span>{isHost ? "End" : "Leave"}</span>
           </button>
         </div>
       </footer>
+
+      {/* Waiting-for-host overlay (attendees before host starts) */}
+      {waitingForHost && !meetingEnded && (
+        <div className={styles.overlay}>
+          <div className={styles.overlayCard}>
+            <Loader2 size={40} className={styles.spinner} />
+            <h2>Waiting for the host to start this meeting</h2>
+            <p>You&apos;ll join automatically once the host lets everyone in.</p>
+            <button className={styles.overlayLeaveBtn} onClick={leaveMeeting}>Leave</button>
+          </div>
+        </div>
+      )}
+
+      {/* Meeting ended overlay */}
+      {meetingEnded && (
+        <div className={styles.overlay}>
+          <div className={styles.overlayCard}>
+            <h2>This meeting has been ended by the host</h2>
+            <p>Redirecting you to the home page...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Host end-meeting confirmation */}
+      {showEndConfirm && (
+        <div className={styles.overlay} onClick={() => setShowEndConfirm(false)}>
+          <div className={styles.confirmCard} onClick={e => e.stopPropagation()}>
+            <div className={styles.confirmIcon}><AlertTriangle size={28} color="#e02828" /></div>
+            <h2>End meeting for everyone?</h2>
+            <p>This will remove all participants and end the meeting for the whole room. This can&apos;t be undone.</p>
+            <div className={styles.confirmButtons}>
+              <button className={styles.confirmCancel} onClick={() => setShowEndConfirm(false)}>Cancel</button>
+              <button className={styles.confirmEnd} onClick={endForAll}>End for all</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -4,8 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
-  Home, Video, MessageCircle, Calendar, Grid, CheckSquare,
-  MoreHorizontal, Settings, Search, Plus, MonitorUp, Wand2, Bell, CalendarCheck, LogOut, ChevronDown
+  Home, Video, MessageCircle, Calendar,
+  MoreHorizontal, Settings, Search, Plus, Bell, CalendarCheck, LogOut, ChevronDown
 } from "lucide-react";
 import { isAuthenticated, getUser, logout, apiFetch } from "@/lib/auth";
 import styles from "./page.module.css";
@@ -126,32 +126,17 @@ export default function Dashboard() {
           <Home className={styles.sidebarIcon} />
           <span>Home</span>
         </div>
-        <div className={styles.sidebarItem}>
+        <div className={styles.sidebarItem} onClick={() => router.push("/meetings")}>
           <Video className={styles.sidebarIcon} />
           <span>Meetings</span>
         </div>
-        <div className={styles.sidebarItem}>
-          <MessageCircle className={styles.sidebarIcon} />
-          <span>Chat</span>
-        </div>
+
         <div className={styles.sidebarItem} onClick={() => router.push("/schedule")}>
           <Calendar className={styles.sidebarIcon} />
           <span>Scheduler</span>
         </div>
-        <div className={styles.sidebarItem}>
-          <Grid className={styles.sidebarIcon} />
-          <span>Canvas</span>
-        </div>
-        <div className={styles.sidebarItem}>
-          <CheckSquare className={styles.sidebarIcon} />
-          <span>Tasks</span>
-        </div>
-        <div className={styles.sidebarItem}>
-          <MoreHorizontal className={styles.sidebarIcon} />
-          <span>More</span>
-        </div>
         <div className={styles.spacer}></div>
-        <div className={styles.sidebarItem}>
+        <div className={styles.sidebarItem} onClick={() => router.push("/settings")}>
           <Settings className={styles.sidebarIcon} />
           <span>Settings</span>
         </div>
@@ -207,20 +192,6 @@ export default function Dashboard() {
               <Calendar size={28} />
             </button>
             <span className={styles.actionLabel}>Schedule</span>
-          </div>
-
-          <div className={styles.actionWrapper}>
-            <button className={`${styles.actionBtn} ${styles.btnBlue}`}>
-              <MonitorUp size={28} />
-            </button>
-            <span className={styles.actionLabel}>Share screen</span>
-          </div>
-
-          <div className={styles.actionWrapper}>
-            <button className={`${styles.actionBtn} ${styles.btnBlue}`}>
-              <Wand2 size={28} />
-            </button>
-            <span className={styles.actionLabel}>My Notes</span>
           </div>
         </div>
 
