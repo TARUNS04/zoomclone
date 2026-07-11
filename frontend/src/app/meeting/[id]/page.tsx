@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback, Suspense } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   Mic, MicOff, Video as VideoIcon, VideoOff, Users, MessageSquare,
@@ -10,23 +10,13 @@ import {
 import { getUser, isAuthenticated } from "@/lib/auth";
 import styles from "./page.module.css";
 
-const WS_BASE = process.env.NEXT_PUBLIC_WS_BASE || "ws://localhost:8000";
-
-// TURN is required for reliable connectivity across the public internet
-// (behind NATs/firewalls STUN alone is not enough). Configure via env:
-//   NEXT_PUBLIC_TURN_URL, NEXT_PUBLIC_TURN_USERNAME, NEXT_PUBLIC_TURN_CREDENTIAL
-const iceServers: RTCIceServer[] = [
-  { urls: "stun:stun.l.google.com:19302" },
-  { urls: "stun:stun1.l.google.com:19302" },
-];
-if (process.env.NEXT_PUBLIC_TURN_URL) {
-  iceServers.push({
-    urls: process.env.NEXT_PUBLIC_TURN_URL,
-    username: process.env.NEXT_PUBLIC_TURN_USERNAME,
-    credential: process.env.NEXT_PUBLIC_TURN_CREDENTIAL,
-  });
-}
-const STUN_SERVERS = { iceServers };
+const WS_BASE = "ws://localhost:8000";
+const STUN_SERVERS = {
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" },
+  ],
+};
 
 interface Participant {
   socketId: string;
@@ -44,7 +34,7 @@ interface ChatMessage {
 
 type SidePanel = "chat" | "participants" | null;
 
-function MeetingRoom() {
+export default function MeetingRoom() {
   const params = useParams();
   const router = useRouter();
   const meetingId = params.id as string;
@@ -682,13 +672,5 @@ function RemoteVideo({ participant }: { participant: Participant }) {
       }
       <div className={styles.participantName}>{participant.username}</div>
     </div>
-  );
-}
-
-export default function MeetingRoomPage() {
-  return (
-    <Suspense fallback={null}>
-      <MeetingRoom />
-    </Suspense>
   );
 }

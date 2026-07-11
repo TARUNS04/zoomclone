@@ -66,16 +66,16 @@ export default function SettingsPage() {
     }
   }, [cameraActive]);
 
-  const loadProfile = async () => {
+  async function loadProfile() {
     try {
       const data = await apiFetch("/auth/me");
       setUsername(data.username || "");
       setEmail(data.email || "");
       setPhoneNumber(data.phone_number || "");
     } catch {}
-  };
+  }
 
-  const loadDevices = async () => {
+  async function loadDevices() {
     try {
       // Only request a brief permission to enumerate labeled devices, then stop immediately
       const tempStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
