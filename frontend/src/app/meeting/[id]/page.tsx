@@ -450,10 +450,19 @@ export default function MeetingRoom() {
               if (video.isLocal) {
                 return (
                   <div key="local" className={styles.videoCard}>
-                    {isVideoOff
-                      ? <div className={styles.avatarCircle}>{user?.username?.[0]?.toUpperCase() || "Y"}</div>
-                      : <video ref={localVideoRef} autoPlay muted playsInline className={`${styles.videoEl} ${styles.mirroredVideo}`} />
-                    }
+                    <video 
+                      ref={localVideoRef} 
+                      autoPlay 
+                      muted 
+                      playsInline 
+                      className={`${styles.videoEl} ${styles.mirroredVideo}`} 
+                      style={{ display: isVideoOff ? "none" : "block" }}
+                    />
+                    {isVideoOff && (
+                      <div className={styles.avatarCircle}>
+                        {user?.username?.[0]?.toUpperCase() || "Y"}
+                      </div>
+                    )}
                     <div className={styles.participantName}>
                       {user?.username || "You"} (You) {isMuted && <MicOff size={12} />}
                     </div>
